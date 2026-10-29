@@ -1438,6 +1438,15 @@ pub fn evaluate(model: &Path, corpus: &Path, split: &str, out: &Path) -> Result<
         manifest["dataset_sha256"] == file_hash(corpus)?,
         "evaluation corpus mismatch"
     );
+    for (key, file) in [
+        ("checkpoint", "checkpoint.safetensors"),
+        ("decoder", "decoder.json"),
+    ] {
+        ensure!(
+            manifest[format!("{key}_sha256")] == file_hash(&model.join(file))?,
+            "evaluation {key} checksum mismatch; retry after checkpoint publication finishes"
+        );
+    }
     let d = SequenceDecoder::load(&model.join("decoder.json"))?;
     let all = load(corpus)?;
     audit(&all)?;
@@ -1469,6 +1478,15 @@ pub fn evaluate(model: &Path, corpus: &Path, split: &str, out: &Path) -> Result<
     net.local_conditioning = d.local_conditioning;
     net.token_space_attention = d.token_space_attention;
     net.store.load(model.join("checkpoint.safetensors"))?;
+    for (key, file) in [
+        ("checkpoint", "checkpoint.safetensors"),
+        ("decoder", "decoder.json"),
+    ] {
+        ensure!(
+            manifest[format!("{key}_sha256")] == file_hash(&model.join(file))?,
+            "evaluation {key} changed while loading; retry after checkpoint publication finishes"
+        );
+    }
     let mut posterior_sse = 0.;
     let mut prior_sse = 0.;
     let mut coordinates = 0.;
@@ -1572,7 +1590,7 @@ pub fn evaluate(model: &Path, corpus: &Path, split: &str, out: &Path) -> Result<
             .as_str()
             .context("decoder checksum")?,
     )?;
-    let result = json!({"free_sequence_examples":probes,"model":manifest["id"],"split":split,"whole_samples":requested.len(),"evaluated_samples":n,"failures":failures,"geometry":{"teacher_forced_posterior_delta_rmse":ratio(posterior_sse,coordinates).map(f64::sqrt),"teacher_forced_prior_delta_rmse":ratio(prior_sse,coordinates).map(f64::sqrt),"event_accuracy":ratio(correct,events),"duration_relative_error":ratio(durations,n as f64)},"latent":{"posterior_mean_variance":variance,"mean_kl":ratio(kl,(n*STYLE)as f64)},"content":"requires free-generation recognition/visual review; teacher forcing is not content accuracy","style":"not independently scored"});
+    let result = json!({"decoder_sha256":manifest["decoder_sha256"],"checkpoint_sha256":manifest["checkpoint_sha256"],"dataset_sha256":manifest["dataset_sha256"],"recipe":manifest["recipe"],"free_sequence_examples":probes,"model":manifest["id"],"split":split,"whole_samples":requested.len(),"evaluated_samples":n,"failures":failures,"geometry":{"teacher_forced_posterior_delta_rmse":ratio(posterior_sse,coordinates).map(f64::sqrt),"teacher_forced_prior_delta_rmse":ratio(prior_sse,coordinates).map(f64::sqrt),"event_accuracy":ratio(correct,events),"duration_relative_error":ratio(durations,n as f64)},"latent":{"posterior_mean_variance":variance,"mean_kl":ratio(kl,(n*STYLE)as f64)},"content":"requires free-generation recognition/visual review; teacher forcing is not content accuracy","style":"not independently scored"});
     save(out, &result)?;
     Ok(result)
 }
@@ -2466,6 +2484,47 @@ mod tests {
         let a = net.export("fixture", &vocabulary, 128).unwrap();
         let c = restored.export("fixture", &vocabulary, 128).unwrap();
         assert_eq!(a.output.weight, c.output.weight);
+        // A later, perfectly valid checkpoint must not be evaluated under an
+        // earlier decoder's identity while a publication is being replaced.
+        save(&dir.join("decoder.json"), &after).unwrap();
+        save(&dir.join("vocabulary.json"), &vocabulary).unwrap();
+        let corpus = dir.join("corpus.jsonl");
+        let fixtures: Vec<_> = ["train", "validation", "test"]
+            .into_iter()
+            .enumerate()
+            .map(|(i, split)| {
+                let mut s = rows[0].sample.clone();
+                s.sample_id = format!("evaluation-{split}");
+                s.source_sha256 = format!("{i:064x}");
+                s.split = split.into();
+                s
+            })
+            .collect();
+        audit(&fixtures).unwrap();
+        fs::write(
+            &corpus,
+            fixtures
+                .iter()
+                .map(|s| serde_json::to_string(s).unwrap())
+                .collect::<Vec<_>>()
+                .join("\n")
+                + "\n",
+        )
+        .unwrap();
+        save(&dir.join("manifest.json"),&json!({"id":"fixture","kind":"sequence-cvae-v3","decoder_sha256":file_hash(&dir.join("decoder.json")).unwrap(),"vocabulary_sha256":file_hash(&dir.join("vocabulary.json")).unwrap(),"checkpoint_sha256":file_hash(&dir.join("checkpoint.safetensors")).unwrap(),"dataset_sha256":file_hash(&corpus).unwrap()})).unwrap();
+        net.store.save(dir.join("checkpoint.safetensors")).unwrap();
+        let report = dir.join("validation.json");
+        let error = evaluate(&dir, &corpus, "validation", &report)
+            .unwrap_err()
+            .to_string();
+        assert!(
+            error.contains("evaluation checkpoint checksum mismatch"),
+            "wrong rejection: {error}"
+        );
+        assert!(
+            !report.exists(),
+            "mismatched weights produced attributed evaluation metrics"
+        );
         fs::remove_dir_all(dir).unwrap();
     }
 }
