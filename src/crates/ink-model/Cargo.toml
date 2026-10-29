@@ -1,0 +1,23 @@
+[package]
+name = "ink-model"
+version.workspace = true
+edition.workspace = true
+[dependencies]
+anyhow.workspace = true
+indicatif.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+zip.workspace = true
+ink-corpus = { path = "../ink-corpus" }
+ink-layout = { path = "../ink-layout" }
+ort = { version = "=2.0.0-rc.8", default-features = false, features = ["load-dynamic", "training", "half"] }
+# ort rc.8 permits later prereleases; keep C bindings on the matching API 19.
+ort-sys = { version = "=2.0.0-rc.8", default-features = false }
+tch = { version = "=0.24.0", optional = true, default-features = false }
+libloading = { version = "0.8", optional = true }
+
+[features]
+rocm = ["dep:tch", "dep:libloading"]
+
+[dependencies.ink-neural]
+path = "../ink-neural"

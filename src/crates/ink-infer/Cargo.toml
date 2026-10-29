@@ -1,0 +1,13 @@
+[package]
+name = "ink-infer"
+version.workspace = true
+edition.workspace = true
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ink-corpus = { path = "../ink-corpus", default-features = false }
+ink-layout = { path = "../ink-layout" }
+
+ink-neural = { path = "../ink-neural" }

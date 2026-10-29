@@ -1,0 +1,8 @@
+{
+  "destination": "legacy/superseded-20261014",
+  "inventory_file": "legacy/superseded-20261014/inventory.json",
+  "inventory_sha256": "eb1314a929d5afaf7991c2b320efb68cf18aacae808ea68e306518b635ad0658",
+  "archived_files": 33206,
+  "archived_bytes": 14881243174,
+  "policy": "Full private per-file inventory stays ignored with legacy. No historical data remains active."
+}

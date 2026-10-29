@@ -1,0 +1,20 @@
+[package]
+name = "ink-cli"
+version.workspace = true
+edition.workspace = true
+[[bin]]
+name = "ink"
+path = "src/main.rs"
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+ink-corpus = { path = "../ink-corpus" }
+ink-layout = { path = "../ink-layout" }
+ink-model = { path = "../ink-model" }
+
+[features]
+rocm = ["ink-model/rocm"]
+
+[dependencies.ink-neural]
+path = "../ink-neural"

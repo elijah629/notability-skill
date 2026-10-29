@@ -1,0 +1,4 @@
+interface:
+  display_name: "Notability forms and LaTeX"
+  short_description: "Fill PDF forms and render handwritten math locally"
+  default_prompt: "Use $notability-form-latex to fill this PDF and place the supplied LaTeX answers in its answer boxes."

@@ -1,0 +1,73 @@
+{
+  "id": "m003",
+  "kind": "conditional-vae-v2",
+  "source_commit": "ec82ffece19b04818b1795a9d755201d3fe80d75",
+  "dataset_sha256": "5c33fdf811918ea5466c22a5801bb3c8aef7c63a3ff2ce590b9334fbbe20d862",
+  "decoder_sha256": "4d0a27c408b3e618adc482cd439dee914bc539756fa3824d1e70e0c3b7475285",
+  "updates": 21729,
+  "training_seconds": 35.2618788,
+  "hardware": {
+    "identity": {
+      "device_id": 30032,
+      "gfx_target_version": 120001,
+      "hip_name": "AMD Radeon Graphics",
+      "pci_bus_id": "0000:03:00.0",
+      "simd_count": 128,
+      "vendor_id": 4098
+    },
+    "index": 0
+  },
+  "glyph_labels": 20,
+  "training_samples": 84,
+  "final_loss": 0.00022042279306333512,
+  "rust_decoder_max_error": 2.384185791015625e-07,
+  "checkpoint_reload_identical": true,
+  "adam_resume_matches_uninterrupted": true,
+  "python_runtime_loaded": false,
+  "vocabulary": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "A",
+    "C",
+    "F",
+    "H",
+    "P",
+    "V",
+    "\\pi",
+    "d",
+    "w",
+    "x",
+    "y"
+  ],
+  "validation_samples": 30,
+  "validation_geometry": {
+    "posterior_xy_rmse": 0.1387639194726944,
+    "stroke_mask_accuracy": 0.9958333373069763
+  },
+  "test_atomic_samples": 0,
+  "content_quality": "not independently scored",
+  "style_quality": "not independently scored",
+  "rust_tests": 9,
+  "unseen_formulas": 20,
+  "nix_application_verified": true,
+  "unpacked_skill_nix_verified": true,
+  "unpacked_output_byte_identical": true,
+  "export_checksums_verified": true,
+  "inference_native_dependencies": [
+    "libgcc_s",
+    "libm",
+    "libc",
+    "ld-linux"
+  ],
+  "decoder_parameters": 71816,
+  "export_zip_sha256": "ced5019c0f9ca86042d27653d151c9deda3b6521515cda0eda54d08fc011da96",
+  "export_zip_bytes": 1205004,
+  "model_artifact_bytes": 3122333
+}

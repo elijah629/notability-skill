@@ -1,0 +1,38 @@
+[
+  {
+    "path": "models/m000/tensor-manifest.json",
+    "sha256": "e3565c6cd8e0d90d1354997284841b2c4a30b24039c3207a21aa99ed4eab93db"
+  },
+  {
+    "path": "models/m000/decoder.json",
+    "sha256": "108d4ee6d6191b2f9170901c1494465814589463c66697a9dbcfdce8d834e3e5"
+  },
+  {
+    "path": "models/m000/vocabulary.json",
+    "sha256": "7b442a200bb649e59ad2c20f40b3f02d5e33882383f754e820eac81341f57909"
+  },
+  {
+    "path": "models/m000/manifest.json",
+    "sha256": "b566e80ce9f76dd378b415625e670784fcad4257e7815929905f0dd1e741c157"
+  },
+  {
+    "path": "models/m001/tensor-manifest.json",
+    "sha256": "e3565c6cd8e0d90d1354997284841b2c4a30b24039c3207a21aa99ed4eab93db"
+  },
+  {
+    "path": "models/m001/decoder.json",
+    "sha256": "108d4ee6d6191b2f9170901c1494465814589463c66697a9dbcfdce8d834e3e5"
+  },
+  {
+    "path": "models/m001/vocabulary.json",
+    "sha256": "7b442a200bb649e59ad2c20f40b3f02d5e33882383f754e820eac81341f57909"
+  },
+  {
+    "path": "models/m001/backend-gate.json",
+    "sha256": "11df0941b0386ec44b1387abb2ceb5b8ee36137667a6ea3a14e7efc988e70711"
+  },
+  {
+    "path": "models/m001/manifest.json",
+    "sha256": "1a251ad56cb3490d3033ebae80c466b6c75f5f0e548ab3661e95f01c31949cc3"
+  }
+]

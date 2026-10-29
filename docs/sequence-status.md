@@ -1,0 +1,42 @@
+# Full-sample sequence implementation
+
+Latest saved candidate and controlled-test results: [m027 training, visual selection and standalone export](handwriting-m027-2026-10-15.md). No candidate is approved as default. Tests fix seed 419 and variation 0. The owner's output now explicitly uses m027.
+
+Latest delivery is the [17.78-MB uncompressed skill ZIP](handwriting-export-2026-10-15.md), with unchanged weights, PDF examples and repeated-letter diagnostics. Nonzero variation creates unnatural jagged/jittery forms; coordinate diversity does not establish naturalness.
+
+The historical 84-sample/20-label restriction belongs to v2. New sequence training uses all 2,001 train samples, preserving 251 validation and 251 test sources. Corpus SHA256 remains `5c33fdf811918ea5466c22a5801bb3c8aef7c63a3ff2ce590b9334fbbe20d862`; the immutable ZIP remains unchanged.
+
+Rust corpus coverage checks all 2,503 sample labels. Current AST syntax failures: zero. The largest exact sample encoding contains 1,299 events; no whole sample is truncated. Nine-stroke glyphs and large words/formulas remain supervised.
+
+The first sequence experiment's lower teacher-forced loss did not yield readable free generation. Semantic AST conditions, prior exposure, learned duration/progress and a compositional whole-row objective were added. The latter optimizes soft stroke-to-condition assignments without writing segmented character annotations. Its current recipe also learns token advances and uses direct ordered reconstruction for existing singleton rows.
+
+`m008` is a development checkpoint, not an approved default. Its first auxiliary recipe used 193 singleton/repeated-run rows and 112 glyph conditions. Source grouping kept the `k`/`l` practice row out of train, exposing poor isolated-letter generalization. The new `m009` auxiliary recipe includes 1,617 complete flat-layout train rows and 137 conditions, including those letters in ordinary words. The sequence branch still uses all 2,001 train rows; structured formulas are not dropped.
+
+Tests cover real sequence/glyph weight updates, cubic round trips, full optimizer recovery, identical restored updates, Rust/native decoder parity, grammar and geometry. GPU training is on the verified RX 9070 XT at PCI `0000:03:00.0`, gfx1201/128 SIMD. Training artifacts remain unapproved until full generation checks and visual review finish.
+
+Generation checks validate exact content requests, termination, finite bounds, provenance and seed reproduction. They do not measure recognizer accuracy or establish visual style. Teacher-forced posterior/prior geometry is separately reported. The current unapproved status must not be described as a finished general handwriting model.
+
+Current recipes preserve every whole train row and additionally balance rare glyph evidence across complete anchor rows. Prefix stroke counts prevent selecting unrelated soft stroke slots; learned points use smooth cubic interpolation. One visibly inconsistent open-path singleton `0` is retained as low-confidence whole-row supervision and excluded from strong anchors. Proportional word spacing and explicitly separated practice-row spacing are modeled separately.
+
+The development `m009` full-generation contract check passed all 2,503 dataset labels and eight new requests (2,511/2,511), without claiming recognition/style accuracy. The final selected model must repeat this check after its last weight update.
+
+The practical SVG renderer composes generated glyphs through the AST. Direct whole-sequence prior probes are also exported by evaluation; current probes are not reliably readable, despite good teacher-forced geometry. This limitation must remain distinct from compositional text generation. Canonical-em calibration, point-set shape loss and curvature regularization address glyph geometry and ordering separately.
+
+## Current acceptance receipts
+
+`m018` (compositional-vector-v10) passed every 2,503 supplied label plus eight fresh requests, 2,511/2,511, after final weights. Validation evaluated 251/251 whole samples: posterior delta RMSE 0.0213855, prior delta RMSE 0.0213554, event accuracy 0.926443. These are teacher-forced geometry measurements, not text recognition. Its visual alphabet review failed for several conditions, including `k`, `t`, `+`, `8`, and `9`; it is deliberately not approved as the default.
+
+Fixed-seed SVG equality, differing seeds, variation-zero equality, reported random seeds and error-before-file behavior passed actual CLI checks. A zipped `m018` diagnostic export was unpacked outside the repository: every bundled checksum passed, and its Rust executable produced identical SVG. The Linux binary links only libc/libm/libgcc; another machine needs those pinned dependencies, provisioned by the bundled Nix flake. This diagnostic export remains unapproved.
+
+Recipe `compositional-vector-v11` changes whole-stroke resampling to arc length, tolerates reversed stroke traversal in weak matching, and adds balanced entropic transport. Soft assignments are model-internal, never accepted character annotations. The changes address dense cubic sampling bias and many source strokes collapsing onto one predicted stroke. `m019` is the corresponding development run. Cross-seed raw-glyph coordinate RMS and within-document repeated-letter RMS are reported separately from visual quality.
+
+
+At the previous handoff, the saved candidate was **m020**, head recipe v12, completed 300-second run. Continuous occupancy supervision fixes the saturated count-gradient path but final lowercase/digit review still fails (`b`, `k`, `q`, `9`, minus). No candidate is approved. See [the full handoff](handwriting-handoff-2026-10-15.md) for exact hashes, checkpoints, budget accounting, evidence paths and continuation commands.
+
+Recipe v13 additionally balances every supported condition: conditions without singleton/repeated-practice anchors reuse up to eight complete short, low-diversity train rows. No row is segmented or relabeled, and the complete flat-row stream remains active. Conditional refinement preserves gradient magnitudes using per-token RMS normalization and bounded steps, replacing sign-only jumps. New runs retain parent lineage and allocate a new model ID; v12 checkpoints cannot resume under v13. Final manifests now record the actual head recipe rather than the stale v10 identifier. Generation uses a constant document pen and procedural math-axis `\cdot` marks independently of training.
+
+The 300.21-second v13 candidate m021 made `k` more recognizable in the seed-419 alphabet, but did not resolve `b`, `q`, `9` or minus. It remains unapproved. Contrary to the first diagnosis, `b` does have repeated-practice anchors; it lacks singleton anchors. v13's fallback-only short contexts therefore did not change its anchor pool. Recipe v14 mixes complete short contexts with repeated-practice anchors for all conditions lacking singletons. Its stronger point-set shape term combines mean and extremal coverage so fitting a large loop cannot cheaply discard a short stem. Curvature regularization and ordered whole-stroke transport remain active.
+
+The 300.21-second v14 candidate m022 failed visual review: `b/q` outlines became fuller, but multiple letters and structural glyphs acquired zigzags. It is rejected for selection despite 2,511/2,511 generation contracts and 251/251 validation samples. Recipe v15 restores the conservative 0.2 shape weight with a small 0.05 extremal term, keeps mixed complete contexts and sharpens prefix occupancy masks (slope 20 versus 6). Continuous raw occupancy supervision remains active, so count gradients do not depend on the saturated prefix. The sharper mask reduces training weight on slots absent from rounded-count inference. Explicit parent selection allows the next experiment to warm-start m021 rather than the visually worse m022.
+
+Owner subsequently requested fixed seed and no variation for testing. All new visual diagnostics and `model verify` requests use seed **419**, variation **0**. The verification report records this setting and checks same-seed SVG equality plus repeated-letter consistency, without varying seeds or injecting style noise. Nonzero-variation diversity remains unmeasured in these diagnostic receipts. A fair zero-variation redraw of m020/m021/m022 confirms m022's zigzags persist in decoder means; they are not random inference wobble. General `generate` defaults remain unchanged; use explicit `--seed 419 --variation 0` for comparison.

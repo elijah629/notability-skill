@@ -1,0 +1,10 @@
+[package]
+name = "ink-neural"
+version.workspace = true
+edition.workspace = true
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ink-corpus = { path = "../ink-corpus" }
+ink-layout = { path = "../ink-layout" }
