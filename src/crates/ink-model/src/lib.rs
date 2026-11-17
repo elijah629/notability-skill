@@ -223,14 +223,21 @@ pub fn collection(model: &Path, inputs: &[String], out: &Path) -> Result<Value> 
     save(out, &result)?;
     Ok(result)
 }
-pub fn export(model: &Path, out: &Path, repo: &Path) -> Result<Value> {
-    let mut manifest = show(model)?;
-    ensure!(!out.exists(), "export requires fresh directory");
+struct ExportStaging(PathBuf);
+
+impl Drop for ExportStaging {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.0);
+    }
+}
+
+pub fn export(model: &Path, destination: &Path, repo: &Path) -> Result<Value> {
+    let archive = destination.with_extension("zip");
     ensure!(
-        !out.with_extension("zip").exists(),
+        !archive.exists(),
         "Export archive already exists. Choose a fresh --out destination"
     );
-    fs::create_dir_all(out)?;
+    let mut manifest = show(model)?;
     let progress = progress::Progress::spinner("Export skill");
     progress.message("Build standalone inference binary");
     let status = progress.suspend(|| {
@@ -249,7 +256,15 @@ pub fn export(model: &Path, out: &Path, repo: &Path) -> Result<Value> {
     })?;
     ensure!(status.success(), "build inference entrypoint failed");
     progress.message("Bundle decoder, provenance and licenses");
-    fs::create_dir(out.join("bin"))?;
+    let parent = archive
+        .parent()
+        .context("Export archive parent directory")?;
+    fs::create_dir_all(parent)?;
+    let staging_path = parent.join(format!(".ink-export-{:016x}", ink_neural::random_seed()?));
+    fs::create_dir(&staging_path)?;
+    let staging = ExportStaging(staging_path);
+    let out = staging.0.join("skill");
+    fs::create_dir_all(out.join("bin"))?;
     fs::copy(
         repo.join("src/target/release/ink-infer"),
         out.join("bin/ink-infer"),
@@ -373,9 +388,8 @@ pub fn export(model: &Path, out: &Path, repo: &Path) -> Result<Value> {
         "skill export must be under 25 MB uncompressed: {uncompressed_bytes} bytes"
     );
     progress.message("Write checksums and ZIP archive");
-    let archive = out.with_extension("zip");
-    ensure!(!archive.exists(), "export archive already exists");
-    let mut zip = zip::ZipWriter::new(fs::File::create(&archive)?);
+    let staged_archive = staging.0.join("skill.zip");
+    let mut zip = zip::ZipWriter::new(fs::File::create(&staged_archive)?);
     let options = zip::write::SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated);
     for (name, _) in hashes {
@@ -392,12 +406,14 @@ pub fn export(model: &Path, out: &Path, repo: &Path) -> Result<Value> {
     zip.start_file("checksums.json", options)?;
     std::io::copy(&mut fs::File::open(out.join("checksums.json"))?, &mut zip)?;
     zip.finish()?;
+    fs::hard_link(&staged_archive, &archive)
+        .with_context(|| format!("Could not publish export to {}", archive.display()))?;
     progress.finish(format!(
         "saved · {:.2} MB uncompressed",
         uncompressed_bytes as f64 / 1_000_000.
     ));
     Ok(
-        json!({"directory":out,"archive":archive,"model":manifest["id"],"kind":manifest["kind"],"uncompressed_bytes":uncompressed_bytes,"decoder_sha256":manifest["decoder_sha256"],"source_decoder_sha256":manifest["export_source_decoder_sha256"],"excluded":["raw data","Python","trainer","note editing"]}),
+        json!({"archive":archive,"model":manifest["id"],"kind":manifest["kind"],"uncompressed_bytes":uncompressed_bytes,"decoder_sha256":manifest["decoder_sha256"],"source_decoder_sha256":manifest["export_source_decoder_sha256"],"excluded":["raw data","Python","trainer","note editing"]}),
     )
 }
 

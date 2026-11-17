@@ -147,7 +147,7 @@ enum Commands {
         #[arg(short, long)]
         out: Option<PathBuf>,
     },
-    /// Export a standalone inference skill to a new directory and ZIP.
+    /// Export a standalone inference skill as a ZIP archive.
     Export {
         model: PathBuf,
         #[arg(short, long)]
@@ -290,7 +290,7 @@ enum Skill {
     Export {
         #[arg(long)]
         model: Option<PathBuf>,
-        #[arg(long, default_value = "exports/personal-handwriting")]
+        #[arg(long, default_value = "exports/personal-handwriting.zip")]
         out: PathBuf,
     },
 }
@@ -398,12 +398,7 @@ fn execute(command: Commands) -> Result<Value> {
                 .as_str()
                 .context("model id")?
                 .to_owned();
-            let out = out.unwrap_or_else(|| PathBuf::from(format!("exports/{id}-skill")));
-            ensure!(
-                !out.exists(),
-                "Export {} already exists. Choose a fresh directory with -o exports/{id}-skill-new",
-                out.display()
-            );
+            let out = out.unwrap_or_else(|| PathBuf::from(format!("exports/{id}-skill.zip")));
             ink_model::export(&model, &out, &repo)?
         }
         Commands::Evaluate {
@@ -748,7 +743,6 @@ fn human(v: &Value) {
     }
     if let Some(archive) = v["archive"].as_str() {
         println!("Exported neural inference skill: {archive}");
-        println!("Directory: {}", v["directory"].as_str().unwrap_or("?"));
         return;
     }
     if v["kind"] == "sequence-cvae-v3" && v.get("id").is_some() {
